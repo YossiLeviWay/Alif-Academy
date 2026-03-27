@@ -365,6 +365,27 @@ const BottomNav = ({ currentScreen, setScreen }: { currentScreen: Screen, setScr
   );
 };
 
+// --- Components ---
+
+const ArabicWord = ({ word, highlightedIndex, className, showUnderline = false }: { word: string, highlightedIndex: number, className?: string, showUnderline?: boolean }) => {
+  return (
+    <div className={cn("arabic-text inline-block", className)} dir="rtl">
+      {word.split('').map((char, i) => (
+        <span 
+          key={i} 
+          className={cn(
+            i === highlightedIndex ? "text-primary font-black" : "opacity-80",
+            i === highlightedIndex && showUnderline && "underline decoration-4 underline-offset-8"
+          )}
+        >
+          {/* Zero Width Joiner (\u200D) ensures characters connect across span boundaries */}
+          {i > 0 && "\u200D"}{char}{i < word.length - 1 && "\u200D"}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 const TopBar = ({ profile, progress, onOpenDashboard }: { profile: UserProfile, progress: UserProgress, onOpenDashboard: () => void }) => {
   return (
     <header className="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant pt-safe px-4 sm:px-8">
@@ -715,14 +736,9 @@ const LessonScreen = ({ setScreen, letter, lessonId, onComplete }: { setScreen: 
               <span className="text-[10px] font-black uppercase tracking-widest text-secondary/60">{example.position} position</span>
             </div>
             <p className="text-on-surface-variant mb-4">The word for "{example.meaning}" contains the letter <span className="font-bold text-primary">{letter.name}</span>.</p>
-            <div className="flex flex-wrap justify-center md:justify-start gap-3">
-              <div className="px-6 py-3 bg-white rounded-2xl text-secondary font-bold shadow-sm arabic-text text-3xl" dir="rtl">
-                {example.word.split('').map((char, i) => (
-                  <span 
-                    key={i} 
-                    className={i === example.highlightedIndex ? "text-primary font-black" : "opacity-80"}
-                  >{char}</span>
-                ))}
+            <div className="flex flex-wrap justify-center md:justify-start gap-3 items-center">
+              <div className="px-6 py-3 bg-white rounded-2xl text-secondary font-bold shadow-sm">
+                <ArabicWord word={example.word} highlightedIndex={example.highlightedIndex} className="text-3xl" />
               </div>
               <button 
                 onClick={() => playArabic(example.word)}
@@ -823,18 +839,13 @@ const ReviewScreen = ({ setScreen, lessonId, progress, onComplete }: { setScreen
             referrerPolicy="no-referrer" 
           />
         </div>
-        <div className="arabic-text text-7xl mb-4 text-primary flex items-center" dir="rtl">
-          {currentWord.word.split('').map((char, i) => (
-            <span 
-              key={i} 
-              className={i === currentWord.highlightedIndex ? "font-black underline decoration-4 underline-offset-8" : "opacity-80"}
-            >{char}</span>
-          ))}
+        <div className="mb-4 flex items-center justify-center gap-4">
+          <ArabicWord word={currentWord.word} highlightedIndex={currentWord.highlightedIndex} className="text-7xl text-primary" showUnderline />
           <button 
             onClick={() => playArabic(currentWord.word)}
-            className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-all mr-4"
+            className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-all"
           >
-            <Volume2 className="w-5 h-5" />
+            <Volume2 className="w-6 h-6" />
           </button>
         </div>
         <h2 className="text-2xl font-black text-on-surface mb-2">{currentWord.transliteration}</h2>
@@ -953,14 +964,14 @@ const QuizScreen = ({ setScreen, lessonId, onComplete, progress }: { setScreen: 
             >
               <Volume2 className="w-5 h-5" />
             </button>
-            <span className={cn(
-              "arabic-text text-8xl md:text-9xl mb-4 transition-transform duration-300 group-hover:scale-110",
-              selected === option.id && option.correct ? "text-primary" : "text-on-surface"
-            )} dir="rtl">
-              {option.char.split('').map((c, i) => (
-                <span key={i}>{c}</span>
-              ))}
-            </span>
+            <ArabicWord 
+              word={option.char} 
+              highlightedIndex={-1} 
+              className={cn(
+                "text-8xl md:text-9xl mb-4 transition-transform duration-300 group-hover:scale-110",
+                selected === option.id && option.correct ? "text-primary" : "text-on-surface"
+              )} 
+            />
             <span className={cn(
               "font-headline font-bold transition-opacity",
               selected === option.id ? "opacity-100" : "opacity-0 group-hover:opacity-100",
@@ -1206,10 +1217,8 @@ const PracticeScreen = ({ progress, setScreen }: { progress: UserProgress, setSc
           <p className="text-on-surface-variant mb-6">You've unlocked {masteredWords.length} words so far.</p>
           <div className="flex flex-wrap gap-2">
             {masteredWords.slice(0, 10).map((w, i) => (
-              <div className="px-3 py-1 bg-white border border-outline-variant rounded-full text-sm font-bold arabic-text" dir="rtl">
-                {w.word.split('').map((c, i) => (
-                  <span key={i}>{c}</span>
-                ))}
+              <div key={i} className="px-3 py-1 bg-white border border-outline-variant rounded-full text-sm font-bold">
+                <ArabicWord word={w.word} highlightedIndex={w.highlightedIndex} />
               </div>
             ))}
             {masteredWords.length > 10 && <span className="text-xs text-on-surface-variant self-center font-bold">+{masteredWords.length - 10} more</span>}
@@ -1275,11 +1284,7 @@ const PracticeScreen = ({ progress, setScreen }: { progress: UserProgress, setSc
           >
             {/* Front */}
             <div className="absolute inset-0 backface-hidden bg-surface-container-lowest border-4 border-primary/20 rounded-[3rem] flex flex-col items-center justify-center p-12 shadow-xl">
-              <span className="arabic-text text-8xl md:text-9xl text-primary font-bold mb-8" dir="rtl">
-                {currentWord.word.split('').map((c, i) => (
-                  <span key={i}>{c}</span>
-                ))}
-              </span>
+              <ArabicWord word={currentWord.word} highlightedIndex={-1} className="text-8xl md:text-9xl text-primary font-bold mb-8" />
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
