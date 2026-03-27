@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "notificationHour": { "type": "integer" },
+        "dailyGoal": { "type": "integer" },
+        "weeklyGoal": { "type": "integer" }
+      },
+      "required": ["name", "avatar", "dailyGoal", "weeklyGoal"]
+    },
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "User learning progress",
+      "type": "object",
+      "properties": {
+        "xp": { "type": "integer" },
+        "streak": { "type": "integer" },
+        "completedLessons": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "masteredLetters": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "masteredWords": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "lastActiveDate": { "type": "string" }
+      },
+      "required": ["xp", "streak", "completedLessons", "masteredLetters", "masteredWords", "lastActiveDate"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document"
+    },
+    "/users/{userId}/progress/current": {
+      "schema": "UserProgress",
+      "description": "User progress document"
+    }
+  }
+}

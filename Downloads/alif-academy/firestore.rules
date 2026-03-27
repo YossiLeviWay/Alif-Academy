@@ -1,0 +1,127 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: {userId}
+// Fields:
+//   - uid: string (required, immutable) - Firebase Auth UID
+//   - name: string (required, max 50 chars) - User's display name
+//   - avatar: string (required, URL) - User's avatar image URL
+//   - notificationHour: int (optional, 0-23) - Preferred notification hour
+//   - dailyGoal: int (required, positive) - Daily learning goal
+//   - weeklyGoal: int (required, positive) - Weekly learning goal
+//
+// Collection: users/{userId}/progress
+// Document ID: current
+// Fields:
+//   - xp: int (required, non-negative) - Total experience points
+//   - streak: int (required, non-negative) - Current daily streak
+//   - completedLessons: list (required, max 1000 items) - List of lesson IDs
+//   - masteredLetters: list (required, max 100 items) - List of letter IDs
+//   - masteredWords: list (required, max 500 items) - List of word IDs
+//   - lastActiveDate: string (required, ISO date) - Last activity date
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "yossi.levi011@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}.*");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['name', 'avatar', 'dailyGoal', 'weeklyGoal']) &&
+             data.keys().hasOnly(['uid', 'name', 'avatar', 'notificationHour', 'dailyGoal', 'weeklyGoal', 'role']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 50 &&
+             isValidUrl(data.avatar) &&
+             (data.notificationHour == null || (data.notificationHour is int && data.notificationHour >= 0 && data.notificationHour <= 23)) &&
+             data.dailyGoal is int && data.dailyGoal > 0 &&
+             data.weeklyGoal is int && data.weeklyGoal > 0;
+    }
+
+    function isValidUserProgress(data) {
+      return data.keys().hasAll(['xp', 'streak', 'completedLessons', 'masteredLetters', 'masteredWords', 'lastActiveDate']) &&
+             data.keys().hasOnly(['xp', 'streak', 'completedLessons', 'masteredLetters', 'masteredWords', 'lastActiveDate']) &&
+             data.xp is int && data.xp >= 0 &&
+             data.streak is int && data.streak >= 0 &&
+             data.completedLessons is list && data.completedLessons.size() <= 1000 &&
+             data.masteredLetters is list && data.masteredLetters.size() <= 100 &&
+             data.masteredWords is list && data.masteredWords.size() <= 500 &&
+             isValidDateString(data.lastActiveDate);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /users/{userId} {
+      // Users can only read their own profile (PII protection)
+      allow read: if isOwner(userId) || isAdmin();
+      
+      allow create: if isOwner(userId) && 
+                      isValidUserProfile(request.resource.data) &&
+                      (!('role' in request.resource.data) || request.resource.data.role == 'user');
+      
+      allow update: if isOwner(userId) && 
+                      isValidUserProfile(request.resource.data) &&
+                      (request.resource.data.uid == resource.data.uid) &&
+                      (request.resource.data.role == resource.data.role || isAdmin());
+
+      match /progress/{progressId} {
+        allow read: if isOwner(userId) || isAdmin();
+        
+        allow create: if isOwner(userId) && 
+                        progressId == 'current' &&
+                        isValidUserProgress(request.resource.data);
+        
+        allow update: if isOwner(userId) && 
+                        progressId == 'current' &&
+                        isValidUserProgress(request.resource.data);
+      }
+    }
+    
+    // Test connection path
+    match /test/connection {
+      allow read: if isAuthenticated();
+    }
+  }
+}
