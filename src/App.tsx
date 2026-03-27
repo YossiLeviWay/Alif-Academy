@@ -702,6 +702,7 @@ const LessonScreen = ({ setScreen, letter, lessonId, onComplete }: { setScreen: 
         <div className="md:col-span-12 bg-secondary/5 rounded-lg p-6 flex flex-col md:flex-row items-center gap-8 border border-secondary/10">
           <div className="w-32 h-32 flex-shrink-0 bg-secondary-fixed rounded-2xl flex items-center justify-center overflow-hidden">
             <img 
+              key={example.image}
               src={example.image} 
               alt={example.meaning} 
               className="w-24 h-24 object-contain"
@@ -715,11 +716,12 @@ const LessonScreen = ({ setScreen, letter, lessonId, onComplete }: { setScreen: 
             </div>
             <p className="text-on-surface-variant mb-4">The word for "{example.meaning}" contains the letter <span className="font-bold text-primary">{letter.name}</span>.</p>
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
-              <div className="px-6 py-3 bg-white rounded-2xl text-secondary font-bold shadow-sm arabic-text text-3xl flex gap-1" dir="rtl">
+              <div className="px-6 py-3 bg-white rounded-2xl text-secondary font-bold shadow-sm arabic-text text-3xl" dir="rtl">
                 {example.word.split('').map((char, i) => (
-                  <span key={i} className={cn(i === example.highlightedIndex ? "text-primary font-black scale-110 inline-block" : "opacity-80")}>
-                    {char}
-                  </span>
+                  <span 
+                    key={i} 
+                    className={i === example.highlightedIndex ? "text-primary font-black" : "opacity-80"}
+                  >{char}</span>
                 ))}
               </div>
               <button 
@@ -813,17 +815,24 @@ const ReviewScreen = ({ setScreen, lessonId, progress, onComplete }: { setScreen
         className="bg-surface-container-lowest p-12 rounded-3xl shadow-xl border border-outline-variant flex flex-col items-center w-full max-w-md"
       >
         <div className="w-48 h-48 bg-secondary-container rounded-3xl flex items-center justify-center mb-8 overflow-hidden">
-          <img src={currentWord.image} alt={currentWord.meaning} className="w-32 h-32 object-contain" referrerPolicy="no-referrer" />
+          <img 
+            key={currentWord.image}
+            src={currentWord.image} 
+            alt={currentWord.meaning} 
+            className="w-32 h-32 object-contain" 
+            referrerPolicy="no-referrer" 
+          />
         </div>
-        <div className="arabic-text text-7xl mb-4 text-primary flex items-center gap-4" dir="rtl">
+        <div className="arabic-text text-7xl mb-4 text-primary flex items-center" dir="rtl">
           {currentWord.word.split('').map((char, i) => (
-            <span key={i} className={cn(i === currentWord.highlightedIndex ? "font-black underline decoration-4 underline-offset-8" : "opacity-80")}>
-              {char}
-            </span>
+            <span 
+              key={i} 
+              className={i === currentWord.highlightedIndex ? "font-black underline decoration-4 underline-offset-8" : "opacity-80"}
+            >{char}</span>
           ))}
           <button 
             onClick={() => playArabic(currentWord.word)}
-            className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-all"
+            className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-all mr-4"
           >
             <Volume2 className="w-5 h-5" />
           </button>
@@ -948,7 +957,9 @@ const QuizScreen = ({ setScreen, lessonId, onComplete, progress }: { setScreen: 
               "arabic-text text-8xl md:text-9xl mb-4 transition-transform duration-300 group-hover:scale-110",
               selected === option.id && option.correct ? "text-primary" : "text-on-surface"
             )} dir="rtl">
-              {option.char}
+              {option.char.split('').map((c, i) => (
+                <span key={i}>{c}</span>
+              ))}
             </span>
             <span className={cn(
               "font-headline font-bold transition-opacity",
@@ -1195,7 +1206,11 @@ const PracticeScreen = ({ progress, setScreen }: { progress: UserProgress, setSc
           <p className="text-on-surface-variant mb-6">You've unlocked {masteredWords.length} words so far.</p>
           <div className="flex flex-wrap gap-2">
             {masteredWords.slice(0, 10).map((w, i) => (
-              <span key={i} className="px-3 py-1 bg-white border border-outline-variant rounded-full text-sm font-bold arabic-text" dir="rtl">{w.word}</span>
+              <div className="px-3 py-1 bg-white border border-outline-variant rounded-full text-sm font-bold arabic-text" dir="rtl">
+                {w.word.split('').map((c, i) => (
+                  <span key={i}>{c}</span>
+                ))}
+              </div>
             ))}
             {masteredWords.length > 10 && <span className="text-xs text-on-surface-variant self-center font-bold">+{masteredWords.length - 10} more</span>}
           </div>
@@ -1260,7 +1275,11 @@ const PracticeScreen = ({ progress, setScreen }: { progress: UserProgress, setSc
           >
             {/* Front */}
             <div className="absolute inset-0 backface-hidden bg-surface-container-lowest border-4 border-primary/20 rounded-[3rem] flex flex-col items-center justify-center p-12 shadow-xl">
-              <span className="arabic-text text-8xl md:text-9xl text-primary font-bold mb-8" dir="rtl">{currentWord.word}</span>
+              <span className="arabic-text text-8xl md:text-9xl text-primary font-bold mb-8" dir="rtl">
+                {currentWord.word.split('').map((c, i) => (
+                  <span key={i}>{c}</span>
+                ))}
+              </span>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();

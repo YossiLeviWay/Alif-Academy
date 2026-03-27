@@ -80,9 +80,9 @@ function createWavHeader(pcmLength: number, sampleRate: number): Uint8Array {
 
 export async function generateSpeech(text: string): Promise<string | null> {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
-      console.error("GEMINI_API_KEY is missing");
+      console.error("VITE_GEMINI_API_KEY is missing. Please add it to your environment variables.");
       return null;
     }
 
